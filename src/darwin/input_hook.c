@@ -575,7 +575,7 @@ static inline void process_modifier_changed(uint64_t timestamp, CGEventRef event
 }
 
 /* These events are totally undocumented for the CGEvent type, but are required to grab media and caps-lock keys.
- */
+leads to crash
 static inline void process_system_key(uint64_t timestamp, CGEventRef event_ref) {
     if( CGEventGetType(event_ref) == NX_SYSDEFINED) {
         #ifdef USE_OBJC
@@ -726,7 +726,7 @@ static inline void process_system_key(uint64_t timestamp, CGEventRef event_ref) 
         #endif
     }
 }
-
+*/
 
 static inline void process_button_pressed(uint64_t timestamp, CGEventRef event_ref, uint16_t button) {
     // Track the number of clicks.
@@ -950,9 +950,9 @@ CGEventRef hook_event_proc(CGEventTapProxy tap_proxy, CGEventType type, CGEventR
             process_modifier_changed(timestamp, event_ref);
             break;
 
-        case NX_SYSDEFINED:
-            process_system_key(timestamp, event_ref);
-            break;
+        //case NX_SYSDEFINED:
+        //    process_system_key(timestamp, event_ref);
+        //    break;
 
         case kCGEventLeftMouseDown:
             set_modifier_mask(MASK_BUTTON1);
@@ -1077,7 +1077,7 @@ UIOHOOK_API int hook_run() {
                 // Setup the event mask to listen for.
                 CGEventMask event_mask = CGEventMaskBit(kCGEventKeyDown) |
                         CGEventMaskBit(kCGEventKeyUp) |
-                        CGEventMaskBit(kCGEventFlagsChanged) |
+                        CGEventMaskBit(kCGEventFlagsChanged); /*
 
                         CGEventMaskBit(kCGEventLeftMouseDown) |
                         CGEventMaskBit(kCGEventLeftMouseUp) |
@@ -1097,6 +1097,7 @@ UIOHOOK_API int hook_run() {
                         // NOTE This event is undocumented and used
                         // for caps-lock release and multi-media keys.
                         CGEventMaskBit(NX_SYSDEFINED);
+						*/
 
                 // Create the event tap.
                 hook->port = CGEventTapCreate(
