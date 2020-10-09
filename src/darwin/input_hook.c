@@ -575,7 +575,7 @@ static inline void process_modifier_changed(uint64_t timestamp, CGEventRef event
 }
 
 /* These events are totally undocumented for the CGEvent type, but are required to grab media and caps-lock keys.
-
+leads to crash
 static inline void process_system_key(uint64_t timestamp, CGEventRef event_ref) {
     if( CGEventGetType(event_ref) == NX_SYSDEFINED) {
         #ifdef USE_OBJC
@@ -1098,6 +1098,7 @@ UIOHOOK_API int hook_run() {
                         // for caps-lock release and multi-media keys.
                         // *** this event leads to crash, details iohook issues 244 / 246
                         // CGEventMaskBit(NX_SYSDEFINED);
+						*/
 
                 // Create the event tap.
                 hook->port = CGEventTapCreate(
