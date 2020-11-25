@@ -1303,3 +1303,13 @@ UIOHOOK_API int hook_stop() {
 
     return status;
 }
+
+UIOHOOK_API int hook_restart() {
+    // Make sure the tap doesn't restart.
+    restart_tap = true;
+
+    logger(LOG_LEVEL_DEBUG, "%s [%u]: Status: %#X.\n",
+            __FUNCTION__, __LINE__, UIOHOOK_SUCCESS);
+
+    return UIOHOOK_SUCCESS;
+}
