@@ -1,13 +1,13 @@
 /* libUIOHook: Cross-platform keyboard and mouse hooking from userland.
- * Copyright (C) 2006-2020 Alexander Barker.  All Rights Received.
- * https://github.com/kwhat/uiohook/
+ * Copyright (C) 2006-2021 Alexander Barker.  All Rights Reserved.
+ * https://github.com/kwhat/libuiohook/
  *
- * UIOHook is free software: you can redistribute it and/or modify
+ * libUIOHook is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * UIOHook is distributed in the hope that it will be useful,
+ * libUIOHook is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -112,6 +112,7 @@ UniCharCount keycode_to_unicode(CGEventRef event_ref, UniChar *buffer, UniCharCo
         }
     }
     #elif defined(USE_APPLICATION_SERVICES)
+    // TODO Try https://developer.apple.com/documentation/coregraphics/1456120-cgeventkeyboardgetunicodestring?language=objc
     if (CFEqual(CFRunLoopGetCurrent(), CFRunLoopGetMain())) {
         // NOTE The following block must execute on the main runloop,
         // Ex: CFEqual(CFRunLoopGetCurrent(), CFRunLoopGetMain()) to avoid 

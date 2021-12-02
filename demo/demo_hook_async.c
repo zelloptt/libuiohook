@@ -1,13 +1,13 @@
 /* libUIOHook: Cross-platform keyboard and mouse hooking from userland.
- * Copyright (C) 2006-2020 Alexander Barker.  All Rights Received.
- * https://github.com/kwhat/uiohook/
+ * Copyright (C) 2006-2021 Alexander Barker.  All Rights Reserved.
+ * https://github.com/kwhat/libuiohook/
  *
- * UIOHook is free software: you can redistribute it and/or modify
+ * libUIOHook is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * UIOHook is distributed in the hope that it will be useful,
+ * libUIOHook is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -84,7 +84,7 @@ bool logger_proc(unsigned int level, const char *format, ...) {
 // from.  This is important because hook_run() attaches to the operating systems
 // event dispatcher and may delay event delivery to the target application.
 // Furthermore, some operating systems may choose to disable your hook if it 
-// takes to long to process.  If you need to do any extended processing, please 
+// takes too long to process.  If you need to do any extended processing, please 
 // do so by copying the event to your own queued dispatch thread.
 void dispatch_proc(uiohook_event * const event) {
     char buffer[256] = { 0 };
@@ -267,7 +267,7 @@ int hook_enable() {
                     __FUNCTION__, __LINE__, (long) THREAD_PRIORITY_TIME_CRITICAL,
                     hook_thread    , (unsigned long) GetLastError());
         }
-        #elif (defined(__APPLE__) && defined(__MACH__)) || _POSIX_C_SOURCE >= 200112L
+        #elif (defined(__APPLE__) && defined(__MACH__)) || _POSIX_C_SOURCE >= 200112L || defined(__FreeBSD__)
         // Some POSIX revisions do not support pthread_setschedprio so we will 
         // use pthread_setschedparam instead.
         struct sched_param param = { .sched_priority = priority };

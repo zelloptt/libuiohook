@@ -1,13 +1,13 @@
 /* libUIOHook: Cross-platform keyboard and mouse hooking from userland.
- * Copyright (C) 2006-2020 Alexander Barker.  All Rights Received.
- * https://github.com/kwhat/uiohook/
+ * Copyright (C) 2006-2021 Alexander Barker.  All Rights Reserved.
+ * https://github.com/kwhat/libuiohook/
  *
- * UIOHook is free software: you can redistribute it and/or modify
+ * libUIOHook is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * UIOHook is distributed in the hope that it will be useful,
+ * libUIOHook is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -931,7 +931,7 @@ static int xrecord_query() {
     // Check to make sure XRecord is installed and enabled.
     int major, minor;
     if (XRecordQueryVersion(hook->ctrl.display, &major, &minor) != 0) {
-        logger(LOG_LEVEL_INFO, "%s [%u]: XRecord version: %i.%i.\n",
+        logger(LOG_LEVEL_DEBUG, "%s [%u]: XRecord version: %i.%i.\n",
                 __FUNCTION__, __LINE__, major, minor);
 
         status = xrecord_alloc();
