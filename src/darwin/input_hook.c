@@ -1143,8 +1143,8 @@ static int create_event_runloop_info(event_runloop_info **hook) {
     // Setup the event mask to listen for.
     CGEventMask event_mask = CGEventMaskBit(kCGEventKeyDown) |
             CGEventMaskBit(kCGEventKeyUp) |
-            CGEventMaskBit(kCGEventFlagsChanged) |
-                        hotkeys don't need mouse events
+            CGEventMaskBit(kCGEventFlagsChanged);/* |
+            hotkeys don't need mouse events
             CGEventMaskBit(kCGEventLeftMouseDown) |
             CGEventMaskBit(kCGEventLeftMouseUp) |
             CGEventMaskBit(kCGEventLeftMouseDragged) |
