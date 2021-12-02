@@ -1,13 +1,13 @@
 /* libUIOHook: Cross-platform keyboard and mouse hooking from userland.
- * Copyright (C) 2006-2020 Alexander Barker.  All Rights Received.
- * https://github.com/kwhat/uiohook/
+ * Copyright (C) 2006-2021 Alexander Barker.  All Rights Reserved.
+ * https://github.com/kwhat/libuiohook/
  *
- * UIOHook is free software: you can redistribute it and/or modify
+ * libUIOHook is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * UIOHook is distributed in the hope that it will be useful,
+ * libUIOHook is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -40,8 +40,8 @@ static XkbDescPtr keyboard_map;
 #include <X11/extensions/XKBrules.h>
 static struct xkb_rule_names xkb_names = {
     .rules = "base",
-    .model = "us",
-    .layout = "pc105",
+    .model = NULL,
+    .layout = NULL,
     .variant = NULL,
     .options = NULL
 };
@@ -50,7 +50,7 @@ static struct xkb_rule_names xkb_names = {
 
 #include "logger.h"
 
-/* The follwoing two tables are based on QEMU's x_keymap.c, under the following
+/* The following two tables are based on QEMU's x_keymap.c, under the following
  * terms:
  *
  * Copyright (C) 2003 Fabrice Bellard <fabrice@bellard.org>

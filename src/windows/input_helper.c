@@ -1,13 +1,13 @@
 /* libUIOHook: Cross-platform keyboard and mouse hooking from userland.
- * Copyright (C) 2006-2020 Alexander Barker.  All Rights Received.
- * https://github.com/kwhat/uiohook/
+ * Copyright (C) 2006-2021 Alexander Barker.  All Rights Reserved.
+ * https://github.com/kwhat/libuiohook/
  *
- * UIOHook is free software: you can redistribute it and/or modify
+ * libUIOHook is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * UIOHook is distributed in the hope that it will be useful,
+ * libUIOHook is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -26,8 +26,6 @@
 
 #include "logger.h"
 #include "input_helper.h"
-
-#define REG_KEYBOARD_LAYOUTS "SYSTEM\\CurrentControlSet\\Control\\Keyboard Layouts\\%s"
 
 static const uint16_t keycode_scancode_table[][2] = {
     /* idx    { vk_code,                scancode             }, */
@@ -423,40 +421,46 @@ static int get_keyboard_layout_file(char *layoutFile, DWORD bufferSize) {
     HKEY hKey;
     DWORD varType = REG_SZ;
 
-    char kbdName[KL_NAMELENGTH];
+    char kbdName[KL_NAMELENGTH * 4];
     if (GetKeyboardLayoutName(kbdName)) {
         logger(LOG_LEVEL_DEBUG, "%s [%u]: Found keyboard layout \"%s\".\n",
                 __FUNCTION__, __LINE__, kbdName);
 
-        size_t keySize = strlen(REG_KEYBOARD_LAYOUTS) + KL_NAMELENGTH;
-        char *kbdKeyPath = (char *) malloc(keySize);
-        if (kbdKeyPath != NULL) {
-            snprintf(kbdKeyPath, keySize, REG_KEYBOARD_LAYOUTS, kbdName);
+        const char *regPrefix = "SYSTEM\\CurrentControlSet\\Control\\Keyboard Layouts\\";
+        size_t regPathSize = strlen(regPrefix) + strlen(kbdName) + 1;
+        char *regPath = malloc(regPathSize);
+        if (regPath != NULL) {
+            strcpy_s(regPath, regPathSize, regPrefix);
+            strcat_s(regPath, regPathSize, kbdName);
 
-            if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, (LPCTSTR) kbdKeyPath, 0, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS) {
-                const char *kbdKey =  "Layout File";
-                if (RegQueryValueEx(hKey, kbdKey, NULL, &varType, (LPBYTE) layoutFile, &bufferSize) == ERROR_SUCCESS) {
+            if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, (LPCTSTR) regPath, 0, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS) {
+                const char *regKey =  "Layout File";
+                if (RegQueryValueEx(hKey, regKey, NULL, &varType, (LPBYTE) layoutFile, &bufferSize) == ERROR_SUCCESS) {
                     RegCloseKey(hKey);
                     status = UIOHOOK_SUCCESS;
                 } else {
                     logger(LOG_LEVEL_WARN, "%s [%u]: RegOpenKeyEx failed to open key: \"%s\"!\n",
-                            __FUNCTION__, __LINE__, kbdKey);
+                            __FUNCTION__, __LINE__, regKey);
                 }
             } else {
                 logger(LOG_LEVEL_WARN, "%s [%u]: RegOpenKeyEx failed to open key: \"%s\"!\n",
-                        __FUNCTION__, __LINE__, kbdKeyPath);
+                        __FUNCTION__, __LINE__, regPath);
             }
 
-            free(kbdKeyPath);
+            free(regPath);
         } else {
             logger(LOG_LEVEL_WARN, "%s [%u]: malloc(%u) failed!\n",
-                    __FUNCTION__, __LINE__, keySize);
+                    __FUNCTION__, __LINE__, regPathSize);
         }
+    } else {
+        logger(LOG_LEVEL_WARN, "%s [%u]: GetKeyboardLayoutName() failed!\n",
+                __FUNCTION__, __LINE__);
     }
 
     return status;
 }
 
+// Returns the number of locales that were loaded.
 static int refresh_locale_list() {
     int count = 0;
 
@@ -644,9 +648,9 @@ static int refresh_locale_list() {
     return count;
 }
 
+// Returns the number of chars written to the buffer.
 SIZE_T keycode_to_unicode(DWORD keycode, PWCHAR buffer, SIZE_T size) {
-    // Get the thread id that currently has focus and ask for its current
-    // locale..
+    // Get the thread id that currently has focus and ask for its current locale.
     DWORD focus_pid = GetWindowThreadProcessId(GetForegroundWindow(), NULL);
     HKL locale_id = GetKeyboardLayout(focus_pid);
 
@@ -661,7 +665,7 @@ SIZE_T keycode_to_unicode(DWORD keycode, PWCHAR buffer, SIZE_T size) {
         }
 
         // You may already be a winner!
-        if (locale_item != NULL && locale_item->id != locale_id) {
+        if (locale_item != NULL && locale_item->id == locale_id) {
             logger(LOG_LEVEL_INFO,
                     "%s [%u]: Activating keyboard layout %#p.\n",
                     __FUNCTION__, __LINE__, locale_item->id);
@@ -688,7 +692,7 @@ SIZE_T keycode_to_unicode(DWORD keycode, PWCHAR buffer, SIZE_T size) {
 
     // Check and make sure the Unicode helper was loaded.
     if (locale_current != NULL) {
-        logger(LOG_LEVEL_INFO,
+        logger(LOG_LEVEL_DEBUG,
                 "%s [%u]: Using keyboard layout %#p.\n",
                 __FUNCTION__, __LINE__, locale_current->id);
 
@@ -835,6 +839,7 @@ SIZE_T keycode_to_unicode(DWORD keycode, PWCHAR buffer, SIZE_T size) {
     return charCount;
 }
 
+// Returns the number of locales that were loaded.
 int load_input_helper() {
     int count = 0;
 
@@ -853,7 +858,7 @@ int load_input_helper() {
     return count;
 }
 
-// This returns the number of locales that were removed.
+// Returns the number of locales that were removed.
 int unload_input_helper() {
     int count = 0;
 

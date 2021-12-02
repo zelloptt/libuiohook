@@ -1,13 +1,13 @@
 # libUIOHook: Cross-platform keyboard and mouse hooking from userland.
-# Copyright (C) 2006-2020 Alexander Barker.  All Rights Received.
-# https://github.com/kwhat/uiohook/
+# Copyright (C) 2006-2021 Alexander Barker.  All Rights Reserved.
+# https://github.com/kwhat/libuiohook/
 #
-# UIOHook is free software: you can redistribute it and/or modify
+# libUIOHook is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published
 # by the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-# UIOHook is distributed in the hope that it will be useful,
+# libUIOHook is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
@@ -63,6 +63,7 @@ install(TARGETS uiohook
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
 )
 
 export(TARGETS uiohook FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake")
@@ -244,12 +245,20 @@ elseif(APPLE)
         target_link_libraries(uiohook "${IOKIT}")
     endif()
 
+    # FIXME Change USE_OBJC flag to USE_APPKIT
+    #option(USE_APPKIT "AppKit framework (default: ON)" ON)
     option(USE_OBJC "Objective-C API (default: ON)" ON)
     if(USE_OBJC)
+        # FIXME Drop USE_OBJC as it is included in AppKit
         find_library(OBJC objc REQUIRED)
         add_compile_definitions(USE_OBJC)
         target_include_directories(uiohook PRIVATE "${OBJC}")
         target_link_libraries(uiohook "${OBJC}")
+
+        find_library(APPKIT AppKit REQUIRED)
+        add_compile_definitions(USE_APPKIT)
+        target_include_directories(uiohook PRIVATE "${APPKIT}")
+        target_link_libraries(uiohook "${APPKIT}")
     endif()
 
     option(USE_CARBON_LEGACY "Legacy Carbon framework functionality (default: OFF)" OFF)

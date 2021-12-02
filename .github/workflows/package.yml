@@ -2,9 +2,45 @@ name: Nightly Build
 on:
   push:
     branches:
-      - 1.2
+      - '**'
 
 jobs:
+  apple-arm64:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+        with:
+          submodules: true
+
+      - name: Compile
+        env:
+          CC: clang
+          CFLAGS: '-O2 -g -target arm64-apple-macos10.5 -flto -fomit-frame-pointer -fno-stack-protector -pipe'
+          LDFLAGS: '-Wl,-dead_strip_dylibs'
+        shell: bash
+        run: |
+          cmake -B ${{github.workspace}}/build \
+            -G "Unix Makefiles" \
+            -D CMAKE_INSTALL_PREFIX=${{github.workspace}}/dist/darwin/arm64 \
+            -D CMAKE_VERBOSE_MAKEFILE=true \
+            -D BUILD_SHARED_LIBS=ON \
+            -D BUILD_DEMO=ON
+
+          cmake --build ${{github.workspace}}/build \
+            --parallel 2 \
+            --config RelWithDebInfo \
+            --clean-first
+
+          cmake --install ${{github.workspace}}/build --config RelWithDebInfo
+
+      - name: Upload
+        uses: actions/upload-artifact@v2
+        with:
+          name: nightly-build
+          path: ${{github.workspace}}/dist/**/*
+
   apple-x86_64:
     runs-on: macos-latest
 
@@ -14,10 +50,10 @@ jobs:
         with:
           submodules: true
 
-      - name: Compile x86_64
+      - name: Compile
         env:
           CC: clang
-          CFLAGS: '-O2 -g -march=x86-64 -mtune=generic -flto -fomit-frame-pointer -fno-stack-protector -pipe'
+          CFLAGS: '-O2 -g -target x86_64-apple-macos10.5 -flto -fomit-frame-pointer -fno-stack-protector -pipe'
           LDFLAGS: '-Wl,-dead_strip_dylibs'
         shell: bash
         run: |
@@ -93,6 +129,74 @@ jobs:
           cmake -B ${{github.workspace}}/build \
             -G "Unix Makefiles" \
             -D CMAKE_INSTALL_PREFIX=${{github.workspace}}/dist/linux/arm \
+            -D CMAKE_VERBOSE_MAKEFILE=true \
+            -D BUILD_SHARED_LIBS=ON \
+            -D BUILD_DEMO=ON
+
+          cmake --build ${{github.workspace}}/build \
+            --parallel 2 \
+            --config RelWithDebInfo \
+            --clean-first
+
+          cmake --install ${{github.workspace}}/build --config RelWithDebInfo
+
+      - name: Upload
+        uses: actions/upload-artifact@v2
+        with:
+          name: nightly-build
+          path: ${{github.workspace}}/dist/**/*
+
+  linux-arm64:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+        with:
+          submodules: true
+
+      - name: Setup
+        shell: bash
+        run: |
+          sudo rm -Rf /etc/apt/sources.list.d
+          sudo bash -c 'source /etc/lsb-release && echo "
+          deb [arch=amd64,i386] http://us.archive.ubuntu.com/ubuntu ${DISTRIB_CODENAME} main universe
+          deb [arch=amd64,i386] http://us.archive.ubuntu.com/ubuntu ${DISTRIB_CODENAME}-updates main universe
+          deb [arch=amd64,i386] http://us.archive.ubuntu.com/ubuntu ${DISTRIB_CODENAME}-backports main universe
+
+          deb [arch=arm64,armhf] http://ports.ubuntu.com/ubuntu-ports ${DISTRIB_CODENAME} main universe
+          deb [arch=arm64,armhf] http://ports.ubuntu.com/ubuntu-ports ${DISTRIB_CODENAME}-updates main universe
+          deb [arch=arm64,armhf] http://ports.ubuntu.com/ubuntu-ports ${DISTRIB_CODENAME}-backports main universe
+          " > /etc/apt/sources.list'
+
+          sudo dpkg --add-architecture arm64
+          sudo apt-get update -m
+
+          sudo apt-get install \
+            binutils-aarch64-linux-gnu \
+            gcc-aarch64-linux-gnu
+
+          sudo apt-get install \
+            libx11-dev:arm64 \
+            libxtst-dev:arm64 \
+            libxt-dev:arm64 \
+            libxinerama-dev:arm64 \
+            libx11-xcb-dev:arm64 \
+            libxkbcommon-dev:arm64 \
+            libxkbcommon-x11-dev:arm64 \
+            libxkbfile-dev:arm64
+
+      - name: Compile
+        env:
+          CC: aarch64-linux-gnu-gcc
+          CFLAGS: '-Os -march=armv8-a+crc -mtune=cortex-a53 -g -flto -fomit-frame-pointer -fno-stack-protector -pipe'
+          LDFLAGS: '-fuse-ld=gold -Wl,-O1 -Wl,--as-needed'
+          PKG_CONFIG_PATH: '/usr/lib/aarch64-linux-gnu/pkgconfig'
+        shell: bash
+        run: |
+          cmake -B ${{github.workspace}}/build \
+            -G "Unix Makefiles" \
+            -D CMAKE_INSTALL_PREFIX=${{github.workspace}}/dist/linux/arm64 \
             -D CMAKE_VERBOSE_MAKEFILE=true \
             -D BUILD_SHARED_LIBS=ON \
             -D BUILD_DEMO=ON

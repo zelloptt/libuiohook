@@ -1,13 +1,13 @@
 /* libUIOHook: Cross-platform keyboard and mouse hooking from userland.
- * Copyright (C) 2006-2020 Alexander Barker.  All Rights Received.
- * https://github.com/kwhat/uiohook/
+ * Copyright (C) 2006-2021 Alexander Barker.  All Rights Reserved.
+ * https://github.com/kwhat/libuiohook/
  *
- * UIOHook is free software: you can redistribute it and/or modify
+ * libUIOHook is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * UIOHook is distributed in the hope that it will be useful,
+ * libUIOHook is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -88,7 +88,7 @@ UIOHOOK_API screen_data* hook_create_screen_info(unsigned char *count) {
                 }
             }
         } else {
-            logger(LOG_LEVEL_DEBUG, "%s [%u]: multiple_get_screen_info failed: %ld. Fallback.\n",
+            logger(LOG_LEVEL_WARN, "%s [%u]: multiple_get_screen_info failed: %ld. Fallback.\n",
                     __FUNCTION__, __LINE__, status);
 
             size_t width = CGDisplayPixelsWide(CGMainDisplayID());
