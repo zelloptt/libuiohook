@@ -1,5 +1,5 @@
 # libUIOHook: Cross-platform keyboard and mouse hooking from userland.
-# Copyright (C) 2006-2021 Alexander Barker.  All Rights Reserved.
+# Copyright (C) 2006-2022 Alexander Barker.  All Rights Reserved.
 # https://github.com/kwhat/libuiohook/
 #
 # libUIOHook is free software: you can redistribute it and/or modify
@@ -212,10 +212,10 @@ if(UNIX AND NOT APPLE)
         add_compile_definitions(uiohook PRIVATE USE_XTEST)
     endif()
 
-    if(LINUX)
-        option(USE_EVDEV "Generic Linux input driver (default: enabled)" ON)
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        option(USE_EVDEV "Generic Linux input driver (default: ON)" ON)
         if(USE_EVDEV)
-            add_compile_definitions("USE_EVDEV")
+            add_compile_definitions(uiohook PRIVATE USE_EVDEV)
         endif()
     endif()
 elseif(APPLE)
@@ -271,9 +271,7 @@ elseif(APPLE)
         endif()
     endif()
 elseif(WIN32)
-    find_library(ADVAPI32 Advapi32)
-    target_include_directories(uiohook PRIVATE "${ADVAPI32}")
-    target_link_libraries(uiohook "${ADVAPI32}")
+    target_link_libraries(uiohook Advapi32)
 endif()
 
 

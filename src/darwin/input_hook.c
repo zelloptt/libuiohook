@@ -1,5 +1,5 @@
 /* libUIOHook: Cross-platform keyboard and mouse hooking from userland.
- * Copyright (C) 2006-2021 Alexander Barker.  All Rights Reserved.
+ * Copyright (C) 2006-2022 Alexander Barker.  All Rights Reserved.
  * https://github.com/kwhat/libuiohook/
  *
  * libUIOHook is free software: you can redistribute it and/or modify
@@ -211,6 +211,9 @@ static void hook_status_proc(CFRunLoopObserverRef observer, CFRunLoopActivity ac
 
     switch (activity) {
         case kCFRunLoopEntry:
+            // Initialize Native Input Functions.
+            load_input_helper();
+
             // Populate the hook start event.
             event.time = timestamp;
             event.reserved = 0x00;
@@ -232,6 +235,9 @@ static void hook_status_proc(CFRunLoopObserverRef observer, CFRunLoopActivity ac
 
             // Fire the hook stop event.
             dispatch_event(&event);
+            
+            // Deinitialize native input helper functions.
+            unload_input_helper();
             break;
 
         default:
@@ -1421,6 +1427,9 @@ UIOHOOK_API int hook_stop() {
 
         // Stop the run loop.
         CFRunLoopStop(event_loop);
+
+        // Cleanup native input functions.
+        unload_input_helper();
 
         status = UIOHOOK_SUCCESS;
     }

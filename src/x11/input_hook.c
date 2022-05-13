@@ -1,5 +1,5 @@
 /* libUIOHook: Cross-platform keyboard and mouse hooking from userland.
- * Copyright (C) 2006-2021 Alexander Barker.  All Rights Reserved.
+ * Copyright (C) 2006-2022 Alexander Barker.  All Rights Reserved.
  * https://github.com/kwhat/libuiohook/
  *
  * libUIOHook is free software: you can redistribute it and/or modify
@@ -255,6 +255,9 @@ void hook_event_proc(XPointer closeure, XRecordInterceptData *recorded_data) {
     uint64_t timestamp = (uint64_t) recorded_data->server_time;
 
     if (recorded_data->category == XRecordStartOfData) {
+        // Initialize native input helper functions.
+        load_input_helper();
+
         // Populate the hook start event.
         event.time = timestamp;
         event.reserved = 0x00;
@@ -274,6 +277,9 @@ void hook_event_proc(XPointer closeure, XRecordInterceptData *recorded_data) {
 
         // Fire the hook stop event.
         dispatch_event(&event);
+
+        // Deinitialize native input helper functions.
+        unload_input_helper();
     } else if (recorded_data->category == XRecordFromServer || recorded_data->category == XRecordFromClient) {
         // Get XRecord data.
         XRecordDatum *data = (XRecordDatum *) recorded_data->data;
@@ -400,7 +406,7 @@ void hook_event_proc(XPointer closeure, XRecordInterceptData *recorded_data) {
             unsigned short int scancode = keycode_to_scancode(keycode);
 
             // TODO If you have a better suggestion for this ugly, let me know.
-            if        (scancode == VC_SHIFT_L) { unset_modifier_mask(MASK_SHIFT_L); }
+            if      (scancode == VC_SHIFT_L)   { unset_modifier_mask(MASK_SHIFT_L); }
             else if (scancode == VC_SHIFT_R)   { unset_modifier_mask(MASK_SHIFT_R); }
             else if (scancode == VC_CONTROL_L) { unset_modifier_mask(MASK_CTRL_L);  }
             else if (scancode == VC_CONTROL_R) { unset_modifier_mask(MASK_CTRL_R);  }
@@ -448,9 +454,11 @@ void hook_event_proc(XPointer closeure, XRecordInterceptData *recorded_data) {
             // Fire key released event.
             dispatch_event(&event);
         } else if (data->type == ButtonPress) {
+            unsigned int map_button = button_map_lookup(data->event.u.u.detail);
+
             // X11 handles wheel events as button events.
-            if (data->event.u.u.detail == WheelUp || data->event.u.u.detail == WheelDown
-                    || data->event.u.u.detail == WheelLeft || data->event.u.u.detail == WheelRight) {
+            if (map_button == WheelUp || map_button == WheelDown
+                    || map_button == WheelLeft || map_button == WheelRight) {
 
                 // Reset the click count and previous button.
                 hook->input.mouse.click.count = 1;
@@ -530,8 +538,7 @@ void hook_event_proc(XPointer closeure, XRecordInterceptData *recorded_data) {
                  * decide how to interpret the wheel events.
                  */
                 uint16_t button = MOUSE_NOBUTTON;
-                switch (data->event.u.u.detail) {
-                    // FIXME This should use a lookup table to handle button remapping.
+                switch (map_button) {
                     case Button1:
                         button = MOUSE_BUTTON1;
                         set_modifier_mask(MASK_BUTTON1);
@@ -615,15 +622,18 @@ void hook_event_proc(XPointer closeure, XRecordInterceptData *recorded_data) {
                 // Fire mouse pressed event.
                 dispatch_event(&event);
             }
-        }
-        else if (data->type == ButtonRelease) {
+        } else if (data->type == ButtonRelease) {
+            unsigned int map_button = button_map_lookup(data->event.u.u.detail);
+
             // X11 handles wheel events as button events.
-            if (data->event.u.u.detail != WheelUp && data->event.u.u.detail != WheelDown) {
+            if (map_button != WheelUp && map_button != WheelDown
+                    && map_button != WheelLeft && map_button != WheelRight) {
+
                 /* This information is all static for X11, its up to the WM to
                  * decide how to interpret the wheel events.
                  */
                 uint16_t button = MOUSE_NOBUTTON;
-                switch (data->event.u.u.detail) {
+                switch (map_button) {
                     // FIXME This should use a lookup table to handle button remapping.
                     case Button1:
                         button = MOUSE_BUTTON1;
@@ -1029,28 +1039,26 @@ static int xrecord_start() {
 }
 
 UIOHOOK_API int hook_run() {
-    int status = UIOHOOK_FAILURE;
-
     // Hook data for future cleanup.
     hook = malloc(sizeof(hook_info));
-    if (hook != NULL) {
-        hook->input.mask = 0x0000;
-        hook->input.mouse.is_dragged = false;
-        hook->input.mouse.click.count = 0;
-        hook->input.mouse.click.time = 0;
-        hook->input.mouse.click.button = MOUSE_NOBUTTON;
-
-        status = xrecord_start();
-
-        // Free data associated with this hook.
-        free(hook);
-        hook = NULL;
-    } else {
+    if (hook == NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to allocate memory for hook structure!\n",
-                __FUNCTION__, __LINE__);
+              __FUNCTION__, __LINE__);
 
-        status = UIOHOOK_ERROR_OUT_OF_MEMORY;
+        return UIOHOOK_ERROR_OUT_OF_MEMORY;
     }
+
+    hook->input.mask = 0x0000;
+    hook->input.mouse.is_dragged = false;
+    hook->input.mouse.click.count = 0;
+    hook->input.mouse.click.time = 0;
+    hook->input.mouse.click.button = MOUSE_NOBUTTON;
+
+    int status = xrecord_start();
+
+    // Free data associated with this hook.
+    free(hook);
+    hook = NULL;
 
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Something, something, something, complete.\n",
             __FUNCTION__, __LINE__);
