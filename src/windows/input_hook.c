@@ -1,5 +1,5 @@
 /* libUIOHook: Cross-platform keyboard and mouse hooking from userland.
- * Copyright (C) 2006-2021 Alexander Barker.  All Rights Reserved.
+ * Copyright (C) 2006-2022 Alexander Barker.  All Rights Reserved.
  * https://github.com/kwhat/libuiohook/
  *
  * libUIOHook is free software: you can redistribute it and/or modify
@@ -162,6 +162,9 @@ void unregister_running_hooks() {
 }
 
 void hook_start_proc() {
+    // Initialize native input helper functions.
+    load_input_helper();
+
     // Get the local system time in UNIX epoch form.
     uint64_t timestamp = GetMessageTime();
 
@@ -189,6 +192,9 @@ void hook_stop_proc() {
 
     // Fire the hook stop event.
     dispatch_event(&event);
+
+    // Deinitialize native input helper functions.
+    unload_input_helper();
 }
 
 static void process_key_pressed(KBDLLHOOKSTRUCT *kbhook) {
@@ -478,7 +484,12 @@ static void process_mouse_wheel(MSLLHOOKSTRUCT *mshook, uint8_t direction) {
      * forward, away from the user; a negative value indicates that
      * the wheel was rotated backward, toward the user. One wheel
      * click is defined as WHEEL_DELTA, which is 120. */
-    event.data.wheel.rotation = ((int16_t) HIWORD(mshook->mouseData) / WHEEL_DELTA) * -1;
+    event.data.wheel.rotation = (int16_t) HIWORD(mshook->mouseData) / WHEEL_DELTA;
+
+    // Vertical direction needs to be inverted on Windows to conform with other platforms.
+    if (direction == WHEEL_VERTICAL_DIRECTION) {
+        event.data.wheel.rotation *= -1;
+    }
 
     // Set the direction based on what event was received.
     event.data.wheel.direction = direction;
