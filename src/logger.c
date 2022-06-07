@@ -28,6 +28,7 @@ static bool default_logger(unsigned int level, const char *format, ...) {
     return false;
 }
 
+
 // Current logger function pointer, should never be null.
 logger_t logger = &default_logger;
 
