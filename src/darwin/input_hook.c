@@ -267,6 +267,8 @@ static inline void process_key_pressed(uint64_t timestamp, CGEventRef event_ref)
     // Fire key pressed event.
     dispatch_event(&event);
 
+    // exclude EVENT_KEY_TYPED
+    /*
     // If the pressed event was not consumed...
     if (event.reserved ^ 0x01) {
         tis_keycode_message->event = event_ref;
@@ -345,6 +347,8 @@ static inline void process_key_pressed(uint64_t timestamp, CGEventRef event_ref)
             dispatch_event(&event);
         }
     }
+    // exclude EVENT_KEY_TYPED
+    */
 }
 
 static inline void process_key_released(uint64_t timestamp, CGEventRef event_ref) {
@@ -1129,7 +1133,7 @@ static void destroy_main_runloop_info(main_runloop_info **main) {
 #endif
 
 
-static int create_event_runloop_info(event_runloop_info **hook) {
+static int create_event_runloop_info(event_runloop_info **hook, bool tapOptionDefault) {
     if (*hook != NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Expected unallocated event_runloop_info pointer!\n",
                 __FUNCTION__, __LINE__);
@@ -1145,12 +1149,15 @@ static int create_event_runloop_info(event_runloop_info **hook) {
 
         return UIOHOOK_ERROR_OUT_OF_MEMORY;
     }
+    (*hook)->port = NULL;
+    (*hook)->source = NULL;
+    (*hook)->observer = NULL;
 
     // Setup the event mask to listen for.
     CGEventMask event_mask = CGEventMaskBit(kCGEventKeyDown) |
             CGEventMaskBit(kCGEventKeyUp) |
-            CGEventMaskBit(kCGEventFlagsChanged) |
-
+            CGEventMaskBit(kCGEventFlagsChanged);/* |
+            hotkeys don't need mouse events
             CGEventMaskBit(kCGEventLeftMouseDown) |
             CGEventMaskBit(kCGEventLeftMouseUp) |
             CGEventMaskBit(kCGEventLeftMouseDragged) |
@@ -1163,18 +1170,20 @@ static int create_event_runloop_info(event_runloop_info **hook) {
             CGEventMaskBit(kCGEventOtherMouseUp) |
             CGEventMaskBit(kCGEventOtherMouseDragged) |
 
-            CGEventMaskBit(kCGEventMouseMoved) |
-            CGEventMaskBit(kCGEventScrollWheel) |
-
+                        CGEventMaskBit(kCGEventMouseMoved) |
+                        CGEventMaskBit(kCGEventScrollWheel);
+                        */
             // NOTE This event is undocumented and used
             // for caps-lock release and multi-media keys.
-            CGEventMaskBit(NX_SYSDEFINED);
+            // *** this event leads to crash, details iohook issues 244 / 246
+                        // CGEventMaskBit(NX_SYSDEFINED);
+    CGEventMask mask = event_mask;
 
     // Create the event tap.
     (*hook)->port = CGEventTapCreate(
             kCGSessionEventTap,       // kCGHIDEventTap
             kCGHeadInsertEventTap,    // kCGTailAppendEventTap
-            kCGEventTapOptionDefault, // kCGEventTapOptionListenOnly See https://github.com/kwhat/jnativehook/issues/22
+            tapOptionDefault ? kCGEventTapOptionDefault : kCGEventTapOptionListenOnly,  // kCGEventTapOptionListenOnly See https://github.com/kwhat/jnativehook/issues/22
             event_mask,
             hook_event_proc,
             NULL);
@@ -1183,10 +1192,13 @@ static int create_event_runloop_info(event_runloop_info **hook) {
                 __FUNCTION__, __LINE__);
 
         return UIOHOOK_ERROR_CREATE_EVENT_PORT;
-    } else {
-        logger(LOG_LEVEL_DEBUG, "%s [%u]: CGEventTapCreate Successful.\n",
-                __FUNCTION__, __LINE__);
-    }
+    } else if (mask != event_mask) {
+        logger(LOG_LEVEL_ERROR, "CGEventTapCreate partially successful mask=%X active mask=%X\n", mask, event_mask);
+        return UIOHOOK_ERROR_CREATE_EVENT_PORT;
+    }/* else {
+        logger(LOG_LEVEL_ERROR, "CGEventTapCreate imitate failure");
+        return UIOHOOK_ERROR_CREATE_EVENT_PORT;
+    }*/
 
     // Create the runloop event source from the event tap.
     (*hook)->source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, (*hook)->port, 0);
@@ -1283,10 +1295,16 @@ UIOHOOK_API int hook_run() {
 
                 // Try and allocate memory for event_runloop_info.
                 event_runloop_info *hook = NULL;
-                int event_runloop_status = create_event_runloop_info(&hook);
+                int event_runloop_status = create_event_runloop_info(&hook, true);
                 if (event_runloop_status != UIOHOOK_SUCCESS) {
+                    logger(LOG_LEVEL_ERROR, "call destroy_event_runloop_info");
                     destroy_event_runloop_info(&hook);
-                    return event_runloop_status;
+                    logger(LOG_LEVEL_ERROR, "call create_event_runloop_info#2");
+                    event_runloop_status = create_event_runloop_info(&hook, false);
+                    if (event_runloop_status != UIOHOOK_SUCCESS) {
+                        destroy_event_runloop_info(&hook);
+                        return event_runloop_status;
+                    }
                 }
 
 
@@ -1310,11 +1328,12 @@ UIOHOOK_API int hook_run() {
 
                 // If we are not running on the main runloop, we need to setup a runloop dispatcher.
                 if (!CFEqual(event_loop, CFRunLoopGetMain())) {
+                    logger(LOG_LEVEL_DEBUG, "we are not running on the main runloop, we need to setup a runloop dispatcher");
                     // Dynamically load dispatch_sync_f to maintain 10.5 compatibility.
                     *(void **) (&dispatch_sync_f_f) = dlsym(RTLD_DEFAULT, "dispatch_sync_f");
                     const char *dlError = dlerror();
                     if (dlError != NULL) {
-                        logger(LOG_LEVEL_DEBUG, "%s [%u]: %s.\n",
+                        logger(LOG_LEVEL_ERROR, "dispatch_sync_f_f fetch failure %s [%u]: %s.\n",
                                 __FUNCTION__, __LINE__, dlError);
                     }
 
@@ -1324,12 +1343,12 @@ UIOHOOK_API int hook_run() {
                     dispatch_main_queue_s = (struct dispatch_queue_s *) dlsym(RTLD_DEFAULT, "_dispatch_main_q");
                     dlError = dlerror();
                     if (dlError != NULL) {
-                        logger(LOG_LEVEL_DEBUG, "%s [%u]: %s.\n",
+                        logger(LOG_LEVEL_ERROR, "dispatch_main_queue_s fetch failure %s [%u]: %s.\n",
                                 __FUNCTION__, __LINE__, dlError);
                     }
 
                     if (dispatch_sync_f_f == NULL || dispatch_main_queue_s == NULL) {
-                        logger(LOG_LEVEL_DEBUG, "%s [%u]: Failed to locate dispatch_sync_f() or dispatch_get_main_queue()!\n",
+                        logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to locate dispatch_sync_f() or dispatch_get_main_queue()!\n",
                                 __FUNCTION__, __LINE__);
 
                         #if !defined(USE_CARBON_LEGACY) && defined(USE_APPLICATION_SERVICES)
@@ -1352,6 +1371,7 @@ UIOHOOK_API int hook_run() {
 
                         int keycode_runloop_status = create_main_runloop_info(&main_runloop_keycode, &main_runloop_keycode_context);
                         if (keycode_runloop_status != UIOHOOK_SUCCESS) {
+                             logger(LOG_LEVEL_DEBUG, "Unable to create main runloop\n");
                             destroy_main_runloop_info(&main_runloop_keycode);
                             return keycode_runloop_status;
                         }
