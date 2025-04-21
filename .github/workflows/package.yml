@@ -10,7 +10,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1.2.0
         with:
           submodules: true
 
@@ -36,7 +36,7 @@ jobs:
           cmake --install ${{github.workspace}}/build --config RelWithDebInfo
 
       - name: Upload
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # v2.3.1
         with:
           name: nightly-build
           path: ${{github.workspace}}/dist/**/*
@@ -46,7 +46,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1.2.0
         with:
           submodules: true
 
@@ -72,7 +72,7 @@ jobs:
           cmake --install ${{github.workspace}}/build --config RelWithDebInfo
 
       - name: Upload
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # v2.3.1
         with:
           name: nightly-build
           path: ${{github.workspace}}/dist/**/*
@@ -83,7 +83,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1.2.0
         with:
           submodules: true
 
@@ -141,7 +141,7 @@ jobs:
           cmake --install ${{github.workspace}}/build --config RelWithDebInfo
 
       - name: Upload
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # v2.3.1
         with:
           name: nightly-build
           path: ${{github.workspace}}/dist/**/*
@@ -151,7 +151,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1.2.0
         with:
           submodules: true
 
@@ -209,7 +209,7 @@ jobs:
           cmake --install ${{github.workspace}}/build --config RelWithDebInfo
 
       - name: Upload
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # v2.3.1
         with:
           name: nightly-build
           path: ${{github.workspace}}/dist/**/*
@@ -219,7 +219,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1.2.0
         with:
           submodules: true
 
@@ -273,7 +273,7 @@ jobs:
           cmake --install ${{github.workspace}}/build --config RelWithDebInfo
 
       - name: Upload
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # v2.3.1
         with:
           name: nightly-build
           path: ${{github.workspace}}/dist/**/*
@@ -283,7 +283,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1.2.0
         with:
           submodules: true
 
@@ -323,7 +323,7 @@ jobs:
           cmake --install ${{github.workspace}}/build --config RelWithDebInfo
 
       - name: Upload
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # v2.3.1
         with:
           name: nightly-build
           path: ${{github.workspace}}/dist/**/*
@@ -333,12 +333,12 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1.2.0
         with:
           submodules: true
 
       - name: Setup
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
         with:
           arch: amd64_arm
 
@@ -360,7 +360,7 @@ jobs:
           cmake --install ${{github.workspace}}\build --config RelWithDebInfo
 
       - name: Upload
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # v2.3.1
         with:
           name: nightly-build
           path: ${{github.workspace}}/dist/**/*
@@ -369,12 +369,12 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1.2.0
         with:
           submodules: true
 
       - name: Setup
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
         with:
           arch: amd64_x86
 
@@ -396,7 +396,7 @@ jobs:
           cmake --install ${{github.workspace}}\build --config RelWithDebInfo
 
       - name: Upload
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # v2.3.1
         with:
           name: nightly-build
           path: ${{github.workspace}}/dist/**/*
@@ -405,12 +405,12 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1.2.0
         with:
           submodules: true
 
       - name: Setup
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
         with:
           arch: amd64
 
@@ -432,7 +432,7 @@ jobs:
           cmake --install ${{github.workspace}}\build --config RelWithDebInfo
 
       - name: Upload
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # v2.3.1
         with:
           name: nightly-build
           path: ${{github.workspace}}/dist/**/*
