@@ -1111,7 +1111,10 @@ static void destroy_main_runloop_info(main_runloop_info **main) {
                  CFRunLoopRemoveObserver(main_loop, (*main)->observer, kCFRunLoopDefaultMode);
              }
 
-             CFRunLoopObserverInvalidate((*main)->observer);
+             // Skip CFRunLoopObserverInvalidate: after CFRunLoopRemoveObserver,
+             // CFRelease alone is sufficient to tear down an owned observer.
+             // The explicit invalidate is redundant and can trigger
+             // __CFCheckCFInfoPACSignature crashes on arm64 macOS.
              CFRelease((*main)->observer);
              (*main)->observer = NULL;
          }
@@ -1246,8 +1249,10 @@ static void destroy_event_runloop_info(event_runloop_info **hook) {
                 CFRunLoopRemoveObserver(event_loop, (*hook)->observer, kCFRunLoopDefaultMode);
             }
 
-            // Invalidate and free hook observer.
-            CFRunLoopObserverInvalidate((*hook)->observer);
+            // Free the hook observer. Previously this also called
+            // CFRunLoopObserverInvalidate, but that is redundant after
+            // CFRunLoopRemoveObserver and can trigger
+            // __CFCheckCFInfoPACSignature crashes on arm64 macOS.
             CFRelease((*hook)->observer);
             (*hook)->observer = NULL;
         }
